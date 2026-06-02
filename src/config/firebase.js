@@ -1,14 +1,15 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
+import { doc, getFirestore, setDoc } from "firebase/firestore";
+import { toast } from "react-toastify";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCe7BmKqmB7mRHoDuTJLM0_LC5Aaf1CRxk",
-  authDomain: "chat-app-59c85.firebaseapp.com",
-  projectId: "chat-app-59c85",
-  storageBucket: "chat-app-59c85.firebasestorage.app",
-  messagingSenderId: "692897103303",
-  appId: "1:692897103303:web:cd642c83031204c75e2de2"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 
@@ -17,7 +18,32 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const signup = async (username, email, password) => {
-  // Signup logic will go here
-}
+  console.log("Signup called", username, email);
 
-export { auth, db, signup };
+  try {
+    const res = await createUserWithEmailAndPassword(auth, email, password);
+    console.log("user", res);
+    const user = res.user;
+    await setDoc(doc(db, "users", user.uid), {
+      id: user.uid,
+      username: username.toLowerCase(),
+      email,
+      name: "",
+      avatar: "",
+      bio: "Hey I am using chat app",
+      lastSeen: Date.now(),
+    })
+    await setDoc(doc(db, "chats", user.uid), {
+      chatData: []
+    })
+
+  }
+  catch (error) {
+    console.error(error);
+
+    toast.error(error.code);
+
+  }
+
+}
+export { signup }
